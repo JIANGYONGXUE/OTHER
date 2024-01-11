@@ -1,0 +1,21 @@
+231220-cellranger处理10X fastq文件（250集群服务器）
+#创建并激活cellranger环境
+conda create -n cellranger
+conda activate cellranger
+#下载安装cellranger7.2.0至231220/cellranger中并解压
+tar -xzvf cellranger7.2.0.tar.gz
+#配置cellranger
+export PATH=/share/home/jiangyongxue/231220/cellranger/cellranger-7.2.0:$PATH
+
+#下载参考基因组（人类）并解压至路径/share/home/jiangyongxue/231220/ref/refdata-gex-GRCh38-2020-A/
+tar -xzvf refdata-gex-GRCh38-2020-A.tar.gz
+
+#查看cellranger是否配置成功
+cellranger
+
+#cellranger处理fastq文件
+#--id=输出结果名称
+#--fastqs=fastq文件路径
+#--sample=fastq文件前缀#fastq文件格式：[sample Name]_S1_L00__001.fastq.gz[Lane number][Read Type]
+#--transcriptome=参考基因组路径
+cellranger count --id=count_result --fastqs=/share/home/jiangyongxue/ZWF/fastq_path --sample=BC-2 --transcriptome=/share/home/jiangyongxue/231220/ref/refdata-gex-GRCh38-2020-A/ --localcores=12 --localmem=32
