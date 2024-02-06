@@ -1,0 +1,39 @@
+##评估不同细胞群的efferocytoosis能力
+##利用来自Genecard的ERG进行细胞群的评分
+load("~/2021sc-GSE176078/GSE176078/20211009-data.RData")##HPH之前注释过的乳腺癌组织单细胞测序数据，Seurat对象为BRCA
+> library(readr)
+> GeneCards_efferocytosis_145_SearchResults <- read_csv("~/JYX-2024-Rscript/GeneCards-efferocytosis-145-SearchResults.csv")####写错了 实际为142个基因
+Rows: 142 Columns: 8                                                                                                            
+── Column specification ─────────────────────────────────────────────────────────────────────
+Delimiter: ","
+chr (6): Gene Symbol, Description, Category, Uniprot ID, GC Id, GeneCards Link
+dbl (2): Gifts, Relevance score
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+> View(GeneCards_efferocytosis_145_SearchResults)
+
+BRCA[["percent.mt"]] <- PercentageFeatureSet(BRCA,pattern = "MT-")
+BRCA<-AddMetaData(BRCA,mmeta,col.name = "X")
+BRCA$celltype_major
+Idents(BRCA)<-"celltype_major"
+levels(BRCA)
+VlnPlot(object = BRCA, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),ncol = 3)
+BRCA<- NormalizeData(BRCA, normalization.method = "LogNormalize", scale.factor = 10000)
+BRCA <- FindVariableFeatures(BRCA, selection.method = "vst", nfeatures = 2000)
+all.gene <- rownames(BRCA)
+BRCA<- ScaleData(BRCA, features = all.gene)
+BRCA<- RunPCA(BRCA, features = VariableFeatures(object = BRCA))
+BRCA<-RunTSNE(BRCA, dims = 1:50)
+BRCA<- FindNeighbors(BRCA,dims = 1:50)
+BRCA<-FindClusters(BRCA, resolution = 0.5)
+
+Idents(BRCA) <- "celltype_major"
+effero <- as.list(GeneCards_efferocytosis_145_SearchResults[,1])#提取出第一列的gene Symble即可
+##进行评分
+BRCA<- AddModuleScore(
+  object =BRCA,
+  features =effero,
+  ctrl = 100, #默认值是100
+  name = 'effero')
+VlnPlot(BRCA,features ="effero1",pt.size=0)
